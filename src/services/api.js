@@ -135,14 +135,21 @@ function saveLocalDB(data) {
   localStorage.setItem(DB_KEY, JSON.stringify(data));
 }
 
-// API client with smart fallback for GitHub Pages
+// API client with bulletproof JSON parse safety
 const BASE_URL = '/api';
+
+const safeFetchJson = async (url, options = {}) => {
+  const res = await fetch(url, options);
+  const contentType = res.headers.get('content-type') || '';
+  if (!res.ok || !contentType.includes('application/json')) {
+    throw new Error('Static Host / Non-JSON Response');
+  }
+  return await res.json();
+};
 
 export const fetchClinicInfo = async () => {
   try {
-    const res = await fetch(`${BASE_URL}/info`);
-    if (!res.ok) throw new Error('Static Mode');
-    return await res.json();
+    return await safeFetchJson(`${BASE_URL}/info`);
   } catch (e) {
     return getLocalDB().hcare_info;
   }
@@ -150,13 +157,11 @@ export const fetchClinicInfo = async () => {
 
 export const updateClinicInfo = async (data) => {
   try {
-    const res = await fetch(`${BASE_URL}/info`, {
+    return await safeFetchJson(`${BASE_URL}/info`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
-    if (!res.ok) throw new Error('Static Mode');
-    return await res.json();
   } catch (e) {
     const dbData = getLocalDB();
     dbData.hcare_info = { ...dbData.hcare_info, ...data };
@@ -167,9 +172,7 @@ export const updateClinicInfo = async (data) => {
 
 export const fetchCountries = async () => {
   try {
-    const res = await fetch(`${BASE_URL}/countries`);
-    if (!res.ok) throw new Error('Static Mode');
-    const data = await res.json();
+    const data = await safeFetchJson(`${BASE_URL}/countries`);
     if (!data || !Array.isArray(data) || data.length === 0) return defaultCountries;
     return data;
   } catch (e) {
@@ -180,9 +183,7 @@ export const fetchCountries = async () => {
 
 export const fetchUsers = async () => {
   try {
-    const res = await fetch(`${BASE_URL}/users`);
-    if (!res.ok) throw new Error('Static Mode');
-    return await res.json();
+    return await safeFetchJson(`${BASE_URL}/users`);
   } catch (e) {
     return getLocalDB().users;
   }
@@ -193,9 +194,7 @@ export const fetchRegistrations = async (search = '', stage = '') => {
     const params = new URLSearchParams();
     if (search) params.append('search', search);
     if (stage) params.append('status_stage', stage);
-    const res = await fetch(`${BASE_URL}/registrations?${params.toString()}`);
-    if (!res.ok) throw new Error('Static Mode');
-    return await res.json();
+    return await safeFetchJson(`${BASE_URL}/registrations?${params.toString()}`);
   } catch (e) {
     let regs = getLocalDB().registrations || [];
     if (search) {
@@ -215,13 +214,11 @@ export const fetchRegistrations = async (search = '', stage = '') => {
 
 export const createRegistration = async (data) => {
   try {
-    const res = await fetch(`${BASE_URL}/registrations`, {
+    return await safeFetchJson(`${BASE_URL}/registrations`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
-    if (!res.ok) throw new Error('Static Mode');
-    return await res.json();
   } catch (e) {
     const dbData = getLocalDB();
     const token = (dbData.registrations || []).length + 1;
@@ -246,9 +243,7 @@ export const createRegistration = async (data) => {
 
 export const fetchQueue = async () => {
   try {
-    const res = await fetch(`${BASE_URL}/queue`);
-    if (!res.ok) throw new Error('Static Mode');
-    return await res.json();
+    return await safeFetchJson(`${BASE_URL}/queue`);
   } catch (e) {
     const regs = getLocalDB().registrations || [];
     return {
@@ -264,13 +259,11 @@ export const fetchQueue = async () => {
 
 export const updatePatientStage = async (id, stage, medicalStatus = null) => {
   try {
-    const res = await fetch(`${BASE_URL}/registrations/${id}/stage`, {
+    return await safeFetchJson(`${BASE_URL}/registrations/${id}/stage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ stage, medical_status: medicalStatus })
     });
-    if (!res.ok) throw new Error('Static Mode');
-    return await res.json();
   } catch (e) {
     const dbData = getLocalDB();
     const idx = dbData.registrations.findIndex(r => String(r.id) === String(id));
@@ -286,13 +279,11 @@ export const updatePatientStage = async (id, stage, medicalStatus = null) => {
 
 export const submitLabResult = async (id, labData) => {
   try {
-    const res = await fetch(`${BASE_URL}/lab/${id}`, {
+    return await safeFetchJson(`${BASE_URL}/lab/${id}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(labData)
     });
-    if (!res.ok) throw new Error('Static Mode');
-    return await res.json();
   } catch (e) {
     const dbData = getLocalDB();
     const idx = dbData.registrations.findIndex(r => String(r.id) === String(id));
@@ -309,13 +300,11 @@ export const submitLabResult = async (id, labData) => {
 
 export const submitMedicalResult = async (id, medicalData) => {
   try {
-    const res = await fetch(`${BASE_URL}/medical/${id}`, {
+    return await safeFetchJson(`${BASE_URL}/medical/${id}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(medicalData)
     });
-    if (!res.ok) throw new Error('Static Mode');
-    return await res.json();
   } catch (e) {
     const dbData = getLocalDB();
     const idx = dbData.registrations.findIndex(r => String(r.id) === String(id));
@@ -333,9 +322,7 @@ export const submitMedicalResult = async (id, medicalData) => {
 
 export const fetchInventory = async () => {
   try {
-    const res = await fetch(`${BASE_URL}/inventory`);
-    if (!res.ok) throw new Error('Static Mode');
-    return await res.json();
+    return await safeFetchJson(`${BASE_URL}/inventory`);
   } catch (e) {
     const dbData = getLocalDB();
     const items = dbData.inventory_items || [];
@@ -354,13 +341,11 @@ export const fetchInventory = async () => {
 
 export const addInventoryBatch = async (batchData) => {
   try {
-    const res = await fetch(`${BASE_URL}/inventory/batch`, {
+    return await safeFetchJson(`${BASE_URL}/inventory/batch`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(batchData)
     });
-    if (!res.ok) throw new Error('Static Mode');
-    return await res.json();
   } catch (e) {
     const dbData = getLocalDB();
     const batch = { ...batchData, id: Date.now() };
@@ -372,9 +357,7 @@ export const addInventoryBatch = async (batchData) => {
 
 export const fetchMofaEntries = async () => {
   try {
-    const res = await fetch(`${BASE_URL}/mofa`);
-    if (!res.ok) throw new Error('Static Mode');
-    return await res.json();
+    return await safeFetchJson(`${BASE_URL}/mofa`);
   } catch (e) {
     return getLocalDB().mofa_entries || [];
   }
@@ -382,13 +365,11 @@ export const fetchMofaEntries = async () => {
 
 export const addMofaEntry = async (mofaData) => {
   try {
-    const res = await fetch(`${BASE_URL}/mofa`, {
+    return await safeFetchJson(`${BASE_URL}/mofa`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(mofaData)
     });
-    if (!res.ok) throw new Error('Static Mode');
-    return await res.json();
   } catch (e) {
     const dbData = getLocalDB();
     const entry = {
@@ -405,9 +386,7 @@ export const addMofaEntry = async (mofaData) => {
 
 export const fetchAnalytics = async () => {
   try {
-    const res = await fetch(`${BASE_URL}/analytics`);
-    if (!res.ok) throw new Error('Static Mode');
-    return await res.json();
+    return await safeFetchJson(`${BASE_URL}/analytics`);
   } catch (e) {
     const regs = getLocalDB().registrations || [];
     const totalRegistrations = regs.length;
