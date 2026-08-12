@@ -331,7 +331,16 @@ export default function PatientRegistration({ onCompleteRegistration }) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">Place of Issue / City</label>
+                <input
+                  type="text"
+                  value={formData.place}
+                  onChange={e => setFormData({ ...formData, place: e.target.value.toUpperCase() })}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white"
+                />
+              </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">Nationality</label>
                 <input

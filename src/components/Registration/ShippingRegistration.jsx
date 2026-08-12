@@ -241,7 +241,7 @@ export default function ShippingRegistration({ onCompleteRegistration }) {
               <User className="w-4 h-4" /> Personal Details
             </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">First Name *</label>
                 <input
@@ -258,6 +258,15 @@ export default function ShippingRegistration({ onCompleteRegistration }) {
                   type="text"
                   value={formData.last_name}
                   onChange={e => setFormData({ ...formData, last_name: e.target.value.toUpperCase() })}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">Place of Issue / City</label>
+                <input
+                  type="text"
+                  value={formData.place}
+                  onChange={e => setFormData({ ...formData, place: e.target.value.toUpperCase() })}
                   className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white"
                 />
               </div>
