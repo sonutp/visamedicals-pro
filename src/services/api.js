@@ -1,6 +1,29 @@
 // Local Storage Database Fallback for Static Hosts (like GitHub Pages)
 const DB_KEY = 'visamedicals_pro_local_db';
 
+const defaultCountries = [
+  { id: 1, country: "Saudi Arabia", reg_fee: 9500, gcc_status: 1 },
+  { id: 2, country: "Qatar", reg_fee: 7500, gcc_status: 1 },
+  { id: 3, country: "UAE", reg_fee: 9500, gcc_status: 1 },
+  { id: 4, country: "Oman", reg_fee: 9500, gcc_status: 1 },
+  { id: 5, country: "Kuwait", reg_fee: 9500, gcc_status: 1 },
+  { id: 6, country: "Bahrain", reg_fee: 9500, gcc_status: 1 },
+  { id: 7, country: "Maritime Seafarer (DG Shipping)", reg_fee: 8500, gcc_status: 0 },
+  { id: 8, country: "UK", reg_fee: 12000, gcc_status: 0 },
+  { id: 9, country: "Canada", reg_fee: 14000, gcc_status: 0 },
+  { id: 10, country: "Australia", reg_fee: 15000, gcc_status: 0 },
+  { id: 11, country: "Malaysia", reg_fee: 4500, gcc_status: 0 },
+  { id: 12, country: "Maldives", reg_fee: 5000, gcc_status: 0 },
+  { id: 13, country: "India", reg_fee: 3500, gcc_status: 0 },
+  { id: 14, country: "Pakistan", reg_fee: 4000, gcc_status: 0 },
+  { id: 15, country: "Bangladesh", reg_fee: 4000, gcc_status: 0 },
+  { id: 16, country: "Nepal", reg_fee: 4000, gcc_status: 0 },
+  { id: 17, country: "Sri Lanka", reg_fee: 4500, gcc_status: 0 },
+  { id: 18, country: "Philippines", reg_fee: 5000, gcc_status: 0 },
+  { id: 19, country: "Indonesia", reg_fee: 4500, gcc_status: 0 },
+  { id: 20, country: "Egypt", reg_fee: 6000, gcc_status: 0 }
+];
+
 const initialLocalData = {
   hcare_info: {
     id: 1,
@@ -18,20 +41,7 @@ const initialLocalData = {
     reg_no: "MH-MED-2024-9981",
     logo: "https://images.unsplash.com/photo-1516549655169-df83a0774514?w=150&h=150&fit=crop&crop=faces"
   },
-  countries: [
-    { id: 1, country: "Saudi Arabia", reg_fee: 9500, gcc_status: 1 },
-    { id: 2, country: "Qatar", reg_fee: 7500, gcc_status: 1 },
-    { id: 3, country: "UAE", reg_fee: 9500, gcc_status: 1 },
-    { id: 4, country: "Oman", reg_fee: 9500, gcc_status: 1 },
-    { id: 5, country: "Kuwait", reg_fee: 9500, gcc_status: 1 },
-    { id: 6, country: "Bahrain", reg_fee: 9500, gcc_status: 1 },
-    { id: 7, country: "UK", reg_fee: 12000, gcc_status: 0 },
-    { id: 8, country: "Canada", reg_fee: 14000, gcc_status: 0 },
-    { id: 9, country: "Australia", reg_fee: 15000, gcc_status: 0 },
-    { id: 10, country: "Malaysia", reg_fee: 4500, gcc_status: 0 },
-    { id: 11, country: "Maldives", reg_fee: 5000, gcc_status: 0 },
-    { id: 12, country: "Maritime Seafarer (DG Shipping)", reg_fee: 8500, gcc_status: 0 }
-  ],
+  countries: defaultCountries,
   users: [
     { id: 1, employee: "ADMINISTRATOR", user_name: "admin", role: "ADMIN", status: 0 },
     { id: 2, employee: "DR. SERGIO AYALA", user_name: "drsergio", role: "DOCTOR", status: 0 },
@@ -109,7 +119,12 @@ function getLocalDB() {
     return initialLocalData;
   }
   try {
-    return JSON.parse(raw);
+    const data = JSON.parse(raw);
+    if (!data.countries || !Array.isArray(data.countries) || data.countries.length === 0) {
+      data.countries = defaultCountries;
+      localStorage.setItem(DB_KEY, JSON.stringify(data));
+    }
+    return data;
   } catch (e) {
     localStorage.setItem(DB_KEY, JSON.stringify(initialLocalData));
     return initialLocalData;
@@ -154,9 +169,12 @@ export const fetchCountries = async () => {
   try {
     const res = await fetch(`${BASE_URL}/countries`);
     if (!res.ok) throw new Error('Static Mode');
-    return await res.json();
+    const data = await res.json();
+    if (!data || !Array.isArray(data) || data.length === 0) return defaultCountries;
+    return data;
   } catch (e) {
-    return getLocalDB().countries;
+    const dbData = getLocalDB();
+    return (dbData.countries && dbData.countries.length > 0) ? dbData.countries : defaultCountries;
   }
 };
 
